@@ -1,5 +1,5 @@
 #include <M5Core2.h>
-#include "SparkClass.h"
+//#include "SparkClass.h"
 #include "SparkPresets.h"
 #include "SparkIO.h"
 
@@ -15,9 +15,9 @@
 #define PANEL_HEIGHT 68
 
 // Spark vars
-SparkClass sc2, scr;
-SparkClass sc_setpreset7f;
-SparkClass sc_getserial;
+//SparkClass sc2, scr, sct;
+//SparkClass sc_setpreset7f;
+//SparkClass sc_getserial;
 
 SparkIO sp;
 
@@ -122,6 +122,7 @@ void setup() {
   display_str("Nothing out",  OUT);
   display_str("Nothing in",   IN);
 
+
   sp.start_bt();
   sp.connect_to_spark();
 
@@ -129,9 +130,30 @@ void setup() {
   keep_alive = millis();
    
    // set up the change to 7f message for when we send a full preset
-  sc_setpreset7f.change_hardware_preset(0x7f);
-  sc_getserial.get_serial();
+//  sc_setpreset7f.change_hardware_preset(0x7f);
+//  sc_getserial.get_serial();
 
+// TESTS 
+
+  sp.create_preset(&preset0);
+  sp.process_out_chunks();
+  sp.process_out_blocks();
+  sp.change_hardware_preset(0x7f);
+  sp.process_out_chunks();
+  sp.process_out_blocks(); 
+
+  for (val=0.0; val < 0.9; val+=0.05) {
+    sp.change_effect_parameter("RolandJC120", 0, val);
+    sp.process_out_chunks();
+    sp.process_out_blocks();     
+  }
+    
+//  sct.create_preset(preset4);
+//  sct.as_hex();
+
+  Serial.println("DONE  TESTS");
+
+// TESTS END
 }
 
 uint8_t get_a_preset[]{0x01,0xfe,0x00,0x00,0x53,0xfe,0x3c,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -174,7 +196,7 @@ void loop() {
         snprintf(instr, DISP_LEN, "Preset: %-.20s", preset.Name);
         display_str(instr, IN);
 
-        sp.create_preset(&preset);
+//        sp.create_preset(&preset);
 //        sp.out_message.dump2();
 /*
         // Dump preset to Serial if you want to - just to prove it works
@@ -204,11 +226,20 @@ void loop() {
         else if (!strcmp(msg.str2, "OverDrivenJM45"))   pres = 5; 
         else if (!strcmp(msg.str2, "AmericanHighGain")) pres = 22;
         else if (!strcmp(msg.str2, "EVH"))              pres = 7;
-                                               
+
+/*
         sc2.create_preset(*presets[pres]);
         sc2.send_receive_bt();
         sc_setpreset7f.send_receive_bt();
+*/
 
+        sp.create_preset(presets[pres]);
+        sp.process_out_chunks();
+        sp.process_out_blocks(); 
+        sp.change_hardware_preset(0x7f);
+        sp.process_out_chunks();
+        sp.process_out_blocks(); 
+        
         snprintf(outstr, DISP_LEN, "Preset: %-.20s", presets[pres]->Name);
         display_str(outstr, OUT);
         break;

@@ -1,5 +1,7 @@
 #include "SparkClass.h"
 
+SparkClass scr;
+
 SparkClass::SparkClass()
 { 
    last_pos = 0;

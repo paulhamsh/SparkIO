@@ -72,7 +72,20 @@ bool RingBuffer::get_at_index(int ind, uint8_t *b) {
     return false;
 }
 
-int RingBuffer::get_len() {
+bool RingBuffer::set_bit_at_index(int ind, uint8_t b) {
+  if (ind >= 0 && ind < t_len) {
+    rb[(st+len+ind) % RB_BUFF_MAX] |= b;    
+    return true;
+  }
+  else
+    return false; 
+}
+
+int RingBuffer::get_len() { // total temp len
+  return t_len;
+}
+
+int RingBuffer::get_pos() { // current position
   return t_len;
 }
 
@@ -118,17 +131,41 @@ void RingBuffer::dump() {
 
 void RingBuffer::dump2() {
   int i;
+  uint8_t v;
 
   Serial.println();
   for (i=0; i<len; i++) {
-     Serial.print(rb[(st+i) % RB_BUFF_MAX], HEX);
-     Serial.print(" ");
+    v=rb[(st+i) % RB_BUFF_MAX];
+    if (v < 16) Serial.print("0");
+    Serial.print(v, HEX);
+    Serial.print(" ");
+    //Serial.print(rb[(st+i) % RB_BUFF_MAX], HEX);
+    //Serial.print(" ");
   };
   for (i=0; i<t_len; i++) {
-    Serial.print(rb[(st+len+i) % RB_BUFF_MAX], HEX);
-    Serial.print(" ");    
+    v=rb[(st+len+i) % RB_BUFF_MAX];
+    if (v < 16) Serial.print("0");
+    Serial.print(v, HEX);
+    Serial.print(" ");
+    
+    //Serial.print(rb[(st+len+i) % RB_BUFF_MAX], HEX);
+    //Serial.print(" ");    
   };
   Serial.println();
+}
+
+//
+// Helpers
+//
+
+
+void uint_to_bytes(unsigned int i, uint8_t *h, uint8_t *l) {
+  *h = (i & 0xff00) / 256;
+  *l = i & 0xff;
+}
+
+void bytes_to_uint(uint8_t h, uint8_t l,unsigned int *i) {
+  *i = (h & 0xff) * 256 + (l & 0xff);
 }
 
 //
@@ -138,6 +175,7 @@ void RingBuffer::dump2() {
 SparkIO::SparkIO() {
   rb_state = 0;
   rc_state = 0;
+  oc_seq = 0;
 }
 
 SparkIO::~SparkIO() {
@@ -227,6 +265,8 @@ void SparkIO::process_in_blocks() {
 void SparkIO::process_in_chunks() {
   uint8_t b;
   bool boo;
+  unsigned int len;
+  uint8_t len_h, len_l;
 
   while (!in_chunk.is_empty()) {               // && in_message.is_empty()) {  -- no longer needed because in_message is now a proper ringbuffer
     boo = in_chunk.get(&b);
@@ -269,6 +309,7 @@ void SparkIO::process_in_chunks() {
           in_message.add(rc_cmd);
           in_message.add(rc_sub);
           in_message.add(0);
+          in_message.add(0);
         }
         break;
       case 10:                    // the main loop which ends on an 0xf7
@@ -282,7 +323,11 @@ void SparkIO::process_in_chunks() {
               in_message.drop();
             }
             else {
-              in_message.set_at_index(2, in_message.get_len());
+              len = in_message.get_len();
+              uint_to_bytes(len, &len_h, &len_l);
+
+              in_message.set_at_index(2, len_h);
+              in_message.set_at_index(3, len_l);
               in_message.commit();
             }  
           }
@@ -309,6 +354,7 @@ void SparkIO::process_in_chunks() {
               in_message.add(rc_cmd);
               in_message.add(rc_sub);
               in_message.add(0);
+              in_message.add(0);
             }
             else if (rc_this_chunk != rc_last_chunk+1)
               in_message_bad = true;
@@ -334,13 +380,9 @@ void SparkIO::process_in_chunks() {
   }
 }
 
-void SparkIO::process_in_message() {
-
-}
-
 //// Routines to interpret the data
 
-void SparkIO::read_byte(int *b)
+void SparkIO::read_byte(uint8_t *b)
 {
   uint8_t a;
   in_message.get(&a);
@@ -349,7 +391,8 @@ void SparkIO::read_byte(int *b)
    
 void SparkIO::read_string(char *str)
 {
-  int a, i, len;
+  uint8_t a, len;
+  int i;
 
   read_byte(&a);
   if (a == 0xd9) {
@@ -379,15 +422,21 @@ void SparkIO::read_string(char *str)
 
 void SparkIO::process() 
 {
+  // process inputs
   sp.process_in_blocks();
   if (!in_chunk.is_empty()) {
     process_in_chunks();
   }
+
+  // process outputs
+//  sp.process_out_chunks();
+//  sp.process_out_blocks();
 }
 
 void SparkIO::read_prefixed_string(char *str)
 {
-  int a, i, len;
+  uint8_t a, len;
+  int i;
 
   read_byte(&a); 
   read_byte(&a);
@@ -414,7 +463,8 @@ void SparkIO::read_float(float *f)
     float val;
     byte b[4];
   } conv;   
-  int a, i;
+  uint8_t a;
+  int i;
 
   read_byte(&a);  // should be 0xca
   if (a != 0xca) return;
@@ -432,7 +482,7 @@ void SparkIO::read_float(float *f)
 
 void SparkIO::read_onoff(bool *b)
 {
-  int a;
+  uint8_t a;
    
   read_byte(&a);
   if (a == 0xc3)
@@ -445,23 +495,26 @@ void SparkIO::read_onoff(bool *b)
 
 bool SparkIO::get_message(unsigned int *cmdsub, SparkMessage *msg, SparkPreset *preset)
 {
-  int cmd, sub, len;
+  uint8_t cmd, sub, len_h, len_l;
+  unsigned int len;
   unsigned int cs;
    
-  int junk;
-  int i, j, num;
+  uint8_t junk;
+  int i, j;
+  uint8_t num;
 
   if (in_message.is_empty()) return false;
 
   read_byte(&cmd);
   read_byte(&sub);
-  read_byte(&len);
+  read_byte(&len_h);
+  read_byte(&len_l);
+  bytes_to_uint(len_h, len_l, &len);
 
-  cs = ((cmd & 0xff) << 8) | (sub & 0xff);
+  bytes_to_uint(cmd, sub, &cs);
 
   *cmdsub = cs;
 
-  
   if (cs == 0x0337 ) {
     read_string(msg->str1);
     read_byte(&msg->param1);
@@ -497,7 +550,7 @@ bool SparkIO::get_message(unsigned int *cmdsub, SparkMessage *msg, SparkPreset *
   else {
     Serial.print("Unprocessed message ");
     Serial.println (cs, HEX);
-    for (i = 0; i < len - 3; i++) {
+    for (i = 0; i < len - 4; i++) {
       read_byte(&junk);
       Serial.print(junk, HEX);
       Serial.print(" ");
@@ -512,6 +565,36 @@ bool SparkIO::get_message(unsigned int *cmdsub, SparkMessage *msg, SparkPreset *
 //
 //
 //
+
+
+void SparkIO::start_message(int cmdsub)
+{
+  om_cmd = (cmdsub & 0xff00) >> 8;
+  om_sub = cmdsub & 0xff;
+
+  // THIS IS TEMPORARY JUST TO SHOW IT WORKS!!!!!!!!!!!!!!!!
+  sp.out_message.clear();
+
+  out_message.add(om_cmd);
+  out_message.add(om_sub);
+  out_message.add(0);      // placeholder for length
+  out_message.add(0);      // placeholder for length
+}
+
+
+void SparkIO::end_message()
+{
+  unsigned int len;
+  uint8_t len_h, len_l;
+  
+  len = out_message.get_len();
+  uint_to_bytes(len, &len_h, &len_l);
+  
+  out_message.set_at_index(2, len_h);   
+  out_message.set_at_index(3, len_l);
+  sp.out_message.commit();
+}
+
 
 void SparkIO::write_byte(byte b)
 {
@@ -601,13 +684,13 @@ void SparkIO::change_effect (char *pedal1, char *pedal2)
    end_message();
 }
 
-void SparkIO::change_hardware_preset (int preset_num)
+void SparkIO::change_hardware_preset (uint8_t preset_num)
 {
    // preset_num is 0 to 3
 
    start_message (0x0138);
-   write_byte (byte(0));
-   write_byte (byte(preset_num))  ;     
+   write_byte (0);
+   write_byte (preset_num)  ;     
    end_message();  
 }
 
@@ -623,21 +706,6 @@ void SparkIO::get_serial()
 {
    start_message (0x0223);
    end_message();  
-}
-
-
-void SparkIO::start_message(int cmdsub)
-{
-  om_cmd = (cmdsub & 0xff00) >> 8;
-  om_sub = cmdsub & 0xff;
-  
-  // THIS IS TEMPORARY JUST TO SHOW IT WORKS!!!!!!!!!!!!!!!!
-  sp.out_message.clear();
-}
-
-void SparkIO::end_message()
-{
-  sp.out_message.commit();
 }
 
 void SparkIO::create_preset(SparkPreset *preset)
@@ -677,4 +745,152 @@ void SparkIO::create_preset(SparkPreset *preset)
   }
   write_byte (preset->end_filler);  
   end_message();
+}
+
+//
+//
+//
+
+
+
+
+void SparkIO::out_store(uint8_t b)
+{
+  uint8_t bits;
+  
+  if (oc_bit_mask == 0x80) {
+    oc_bit_mask = 1;
+    oc_bit_pos = out_chunk.get_pos();
+    out_chunk.add(0);
+  }
+  
+  if (b & 0x80) {
+    out_chunk.set_bit_at_index(oc_bit_pos, oc_bit_mask);
+    oc_checksum ^= oc_bit_mask;
+  }
+  out_chunk.add(b & 0x7f);
+  oc_checksum ^= (b & 0x7f);
+
+  oc_len++;
+
+  /*
+  if (oc_bit_mask == 0x40) {
+    out_chunk.get_at_index(oc_bit_pos, &bits);
+    oc_checksum ^= bits;    
+  }
+*/  
+  oc_bit_mask *= 2;
+}
+
+
+void SparkIO::process_out_chunks() {
+  int i, j, len;
+  int checksum_pos;
+  uint8_t b;
+  uint8_t len_h, len_l;
+
+  uint8_t num_chunks, this_chunk, this_len;
+ 
+  while (!out_message.is_empty()) {
+    out_message.get(&oc_cmd);
+    out_message.get(&oc_sub);
+    out_message.get(&len_h);
+    out_message.get(&len_l);
+    bytes_to_uint(len_h, len_l, &oc_len);
+    len = oc_len -4;
+
+    if (len > 0x80) { //this is a multi-chunk message
+      num_chunks = int(len / 0x80) + 1;
+      for (this_chunk=0; this_chunk < num_chunks; this_chunk++) {
+       
+        // create chunk header
+        out_chunk.add(0xf0);
+        out_chunk.add(0x01);
+        out_chunk.add(oc_seq);
+        checksum_pos = out_chunk.get_pos();
+        out_chunk.add(0); // checksum
+        
+        out_chunk.add(oc_cmd);
+        out_chunk.add(oc_sub);
+
+        if (num_chunks == this_chunk+1) 
+          this_len = len % 0x80; 
+        else 
+          this_len = 0x80;
+
+        oc_bit_mask = 0x80;
+        oc_checksum = 0;
+        
+        // create chunk sub-header          
+        out_store(num_chunks);
+        out_store(this_chunk);
+        out_store(this_len);
+        
+        for (i = 0; i < this_len; i++) {
+          out_message.get(&b);
+          out_store(b);
+        }
+        out_chunk.set_at_index(checksum_pos, oc_checksum);        
+        out_chunk.add(0xf7);
+      }
+    } 
+    else { 
+    // create chunk header
+      out_chunk.add(0xf0);
+      out_chunk.add(0x01);
+      out_chunk.add(oc_seq);
+
+      checksum_pos = out_chunk.get_pos();
+      out_chunk.add(0); // checksum
+
+      out_chunk.add(oc_cmd);
+      out_chunk.add(oc_sub);
+
+      oc_bit_mask = 0x80;
+      oc_checksum = 0;
+      for (i = 0; i < len; i++) {
+        out_message.get(&b);
+        out_store(b);
+      }
+     out_chunk.set_at_index(checksum_pos, oc_checksum);        
+     out_chunk.add(0xf7);
+    }
+    out_chunk.commit();
+  }
+}
+
+void SparkIO::process_out_blocks() {
+  int i;
+  int len;
+  uint8_t b;  
+
+  while (!out_chunk.is_empty()) {
+    ob_pos = 16;
+  
+    out_block[0]= 0x01;
+    out_block[1]= 0xfe;  
+    out_block[2]= 0x00;    
+    out_block[3]= 0x00;
+    out_block[4]= 0x53;
+    out_block[5]= 0xfe;
+    out_block[6]= 0x00;
+    for (i=7; i<16;i++) 
+      out_block[i]= 0x00;
+    
+    b = 0;
+    while (b != 0xf7) {
+      sp.out_chunk.get(&b);
+      out_block[ob_pos++] = b;
+    }
+
+    out_block[6] = ob_pos;
+
+    for (i=0; i<ob_pos; i++) {
+      if (out_block[i]<16) Serial.print("0");
+      Serial.print(out_block[i], HEX); 
+    }
+
+    sp.bt.write(out_block, ob_pos);
+    delay(200);
+  }
 }

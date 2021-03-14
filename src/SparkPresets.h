@@ -1,3 +1,5 @@
+#include "SparkIO.h"
+
 SparkPreset preset0{0x0,0x7f,"07079063-94A9-41B1-AB1D-02CBC5D00790","Silver Ship","0.7","1-Clean","icon.png",120.000000,{ 
   {"bias.noisegate", false, 3, {0.138313, 0.224643, 0.000000}}, 
   {"LA2AComp", true, 3, {0.000000, 0.852394, 0.373072}}, 
