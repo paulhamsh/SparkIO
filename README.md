@@ -9,7 +9,11 @@ It even works in the most complex case where a multi-chunk preset is sandwiched 
 To handle the asynchronous nature of the receipt of messages, a ring buffer is used to store the chunk data.  
 This is then converted to msgpack data in a second ring buffer.  
 
-Eventually this is converted to C++ structure SparkPreset or SparkMessage by a call to sp.get_message(&cmdsub, &msg, &preset)
+Eventually this is converted to C++ structure SparkPreset or SparkMessage by a call to 
+
+```
+sp.get_message(&cmdsub, &msg, &preset)
+```
 
 To use create an instance of the class and a variables for the commnand, a preset and a message, then in loop() call the async processing part (process) and then retrieve the messages with get_message().    
 get_message() returns true if a message has been retrieved, and it is stored in either &msg or &preset depending on whether it was a simple message or a preset.   
