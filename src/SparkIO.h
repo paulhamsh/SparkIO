@@ -137,10 +137,14 @@ class SparkIO
     int rd_pos;
     
     // message variables for sending
+
+    // out_message
     
     RingBuffer out_message;
     int om_cmd;
     int om_sub;
+
+    // out_chunk
 
     RingBuffer out_chunk;
     uint8_t oc_seq;
@@ -152,8 +156,14 @@ class SparkIO
     int oc_bit_pos;
     uint8_t oc_checksum;
 
+    // out_block
     uint8_t out_block[0xad];
     int ob_pos;
+    bool ob_ok_to_send;
+    uint8_t ob_last_seq_sent;
+    unsigned int ob_last_sent_time;
+    
+    
     
   private:
    

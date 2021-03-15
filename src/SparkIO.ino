@@ -1,6 +1,71 @@
 #include "SparkIO.h"
 #define DEBUG(x) Serial.println(x)
 
+/*  SparkIO
+ *  
+ *  SparkIO handles communication to and from the Positive Grid Spark amp over bluetooth for ESP32 boards
+ *  
+ *  From the programmers perspective, you create and read two formats - a Spark Message or a Spark Preset.
+ *  The Preset has all the data for a full preset (amps, effects, values) and can be sent or received from the amp.
+ *  The Message handles all other changes - change amp, change effect, change value of an effect parameter, change hardware preset and so on
+ *  
+ *  The class is initialized by creating an instance such as:
+ *  
+ *  SparkClass sp;
+ *  
+ *  Conection is handled with the two commands:
+ *  
+ *    sp.start_bt();
+ *    sp.connect_to_spark();
+ *    
+ *  The first starts up bluetooth, the second connects to the amp
+ *  
+ *  
+ *  Messages and presets to and from the amp are then queued and processed.
+ *  The essential thing is the have the process() function somewhere in loop() - this handles all the processing of the input and output queues
+ *  
+ *  loop() {
+ *    ...
+ *    sp.process()
+ *    ...
+ *    do something
+ *    ...
+ *  }
+ * 
+ * Sending functions:
+ *     void create_preset(SparkPreset *preset);    
+ *     void get_serial();    
+ *     void turn_effect_onoff(char *pedal, bool onoff);    
+ *     void change_hardware_preset(uint8_t preset_num);    
+ *     void change_effect(char *pedal1, char *pedal2);    
+ *     void change_effect_parameter(char *pedal, int param, float val);
+ *     
+ *     These all create a message or preset to be sent to the amp when they reach the front of the 'send' queue
+ *  
+ * Receiving functions:
+ *     bool get_message(unsigned int *cmdsub, SparkMessage *msg, SparkPreset *preset);
+ * 
+ *     This receives the front of the 'received' queue - if there is nothing it returns false
+ *     
+ *     Based on whatever was in the queue, it will populate fields of the msg parameter or the preset parameter.
+ *     Eveything apart from a full preset sent from the amp will be a message.
+ *     
+ *     You can determine which by inspecting cmdsub - this will be 0x0301 for a preset.
+ *     
+ *     Other values are:
+ *     
+ *     cmdsub       str1                   str2              val           param1             param2                onoff
+ *     0323         amp serial #
+ *     0337         effect name                              effect val    effect number
+ *     0306         old effect             new effect
+ *     0338                                                                0                  new hw preset (0-3)
+ * 
+ * 
+ * 
+ */
+
+ 
+
 //
 // RingBuffer class
 //
@@ -175,7 +240,9 @@ void bytes_to_uint(uint8_t h, uint8_t l,unsigned int *i) {
 SparkIO::SparkIO() {
   rb_state = 0;
   rc_state = 0;
-  oc_seq = 0;
+  oc_seq = 0x20;
+  ob_ok_to_send = true;
+  ob_last_sent_time = millis();
 }
 
 SparkIO::~SparkIO() {
@@ -208,6 +275,27 @@ void SparkIO::connect_to_spark() {
   while (bt.available())
     b = bt.read(); 
 }
+
+// 
+// Main processing routine
+//
+
+void SparkIO::process() 
+{
+  // process inputs
+  process_in_blocks();
+  process_in_chunks();
+
+  if (!ob_ok_to_send && (millis() - ob_last_sent_time > 500)) {
+    DEBUG("Timeout on send");
+    ob_ok_to_send = true;
+  }
+
+  // process outputs
+  process_out_chunks();
+  process_out_blocks();
+}
+
 
 //
 // Routine to read the block from bluetooth and put into the in_chunk ring buffer
@@ -294,6 +382,12 @@ void SparkIO::process_in_chunks() {
       case 5:
         rc_sub = b; 
         rc_state = 10;
+
+        // flow control for blocking sends - put here in case we want to check rc_sub too
+        if (rc_cmd == 0x04 && rc_sub == 0x01) {
+          ob_ok_to_send = true;
+          DEBUG("Unblocked");
+        }
         
         // set up for the main data loop - rc_state 10
         rc_bitmask = 0x80;
@@ -420,19 +514,6 @@ void SparkIO::read_string(char *str)
   }
 }   
 
-void SparkIO::process() 
-{
-  // process inputs
-  sp.process_in_blocks();
-  if (!in_chunk.is_empty()) {
-    process_in_chunks();
-  }
-
-  // process outputs
-//  sp.process_out_chunks();
-//  sp.process_out_blocks();
-}
-
 void SparkIO::read_prefixed_string(char *str)
 {
   uint8_t a, len;
@@ -456,7 +537,6 @@ void SparkIO::read_prefixed_string(char *str)
   }
 }   
 
-
 void SparkIO::read_float(float *f)
 {
   union {
@@ -478,7 +558,6 @@ void SparkIO::read_float(float *f)
   } 
   *f = conv.val;
 }
-
 
 void SparkIO::read_onoff(bool *b)
 {
@@ -514,48 +593,58 @@ bool SparkIO::get_message(unsigned int *cmdsub, SparkMessage *msg, SparkPreset *
   bytes_to_uint(cmd, sub, &cs);
 
   *cmdsub = cs;
-
-  if (cs == 0x0337 ) {
-    read_string(msg->str1);
-    read_byte(&msg->param1);
-    read_float(&msg->val);
-  }
-  else if (cs == 0x0306 ) {
-    read_string(msg->str1);
-    read_string(msg->str2);
-  }
-  else if (cs == 0x0301) {
-    read_byte(&junk);
-    read_byte(&preset->preset_num);
-    read_string(preset->UUID); 
-    read_string(preset->Name);
-    read_string(preset->Version);
-    read_string(preset->Description);
-    read_string(preset->Icon);
-    read_float(&preset->BPM);
-
-    for (j=0; j<7; j++) {
-      read_string(preset->effects[j].EffectName);
-      read_onoff(&preset->effects[j].OnOff);
-      read_byte(&num);
-      preset->effects[j].NumParameters = num - 0x90;
-      for (i = 0; i < preset->effects[j].NumParameters; i++) {
-        read_byte(&junk);
-        read_byte(&junk);
-        read_float(&preset->effects[j].Parameters[i]);
-      }
-    }
-    read_byte(&junk);  
-  }
-  else {
-    Serial.print("Unprocessed message ");
-    Serial.println (cs, HEX);
-    for (i = 0; i < len - 4; i++) {
+  switch (cs) {
+    case 0x0323:
+      read_string(msg->str1);
+      break;
+    case 0x0337:
+      read_string(msg->str1);
+      read_byte(&msg->param1);
+      read_float(&msg->val);
+      break;
+    case 0x0306:
+      read_string(msg->str1);
+      read_string(msg->str2);
+      break;
+    case 0x0338:
+      read_byte(&msg->param1);
+      read_byte(&msg->param2);
+      break;
+    case 0x0301:
       read_byte(&junk);
-      Serial.print(junk, HEX);
-      Serial.print(" ");
-    }
-    Serial.println();
+      read_byte(&preset->preset_num);
+      read_string(preset->UUID); 
+      read_string(preset->Name);
+      read_string(preset->Version);
+      read_string(preset->Description);
+      read_string(preset->Icon);
+      read_float(&preset->BPM);
+
+      for (j=0; j<7; j++) {
+        read_string(preset->effects[j].EffectName);
+        read_onoff(&preset->effects[j].OnOff);
+        read_byte(&num);
+        preset->effects[j].NumParameters = num - 0x90;
+        for (i = 0; i < preset->effects[j].NumParameters; i++) {
+          read_byte(&junk);
+          read_byte(&junk);
+          read_float(&preset->effects[j].Parameters[i]);
+        }
+      }
+      read_byte(&junk);  
+      break;
+    case 0x0401:
+      break;
+    default:
+      Serial.print("Unprocessed message ");
+      Serial.print (cs, HEX);
+      Serial.print(":");
+      for (i = 0; i < len - 4; i++) {
+        read_byte(&junk);
+        Serial.print(junk, HEX);
+        Serial.print(" ");
+      }
+      Serial.println();
   }
 
   return true;
@@ -563,7 +652,7 @@ bool SparkIO::get_message(unsigned int *cmdsub, SparkMessage *msg, SparkPreset *
 
     
 //
-//
+// Output routines
 //
 
 
@@ -573,7 +662,7 @@ void SparkIO::start_message(int cmdsub)
   om_sub = cmdsub & 0xff;
 
   // THIS IS TEMPORARY JUST TO SHOW IT WORKS!!!!!!!!!!!!!!!!
-  sp.out_message.clear();
+  //sp.out_message.clear();
 
   out_message.add(om_cmd);
   out_message.add(om_sub);
@@ -665,6 +754,7 @@ void SparkIO::write_onoff (bool onoff)
 
 //
 //
+//
 
 void SparkIO::change_effect_parameter (char *pedal, int param, float val)
 {
@@ -751,9 +841,6 @@ void SparkIO::create_preset(SparkPreset *preset)
 //
 //
 
-
-
-
 void SparkIO::out_store(uint8_t b)
 {
   uint8_t bits;
@@ -807,6 +894,10 @@ void SparkIO::process_out_chunks() {
         out_chunk.add(0xf0);
         out_chunk.add(0x01);
         out_chunk.add(oc_seq);
+        
+        oc_seq++;
+        if (oc_seq > 0x7f) oc_seq = 0x20;
+        
         checksum_pos = out_chunk.get_pos();
         out_chunk.add(0); // checksum
         
@@ -863,8 +954,9 @@ void SparkIO::process_out_blocks() {
   int i;
   int len;
   uint8_t b;  
+  uint8_t cmd, sub;
 
-  while (!out_chunk.is_empty()) {
+  while (!out_chunk.is_empty() && ob_ok_to_send) {
     ob_pos = 16;
   
     out_block[0]= 0x01;
@@ -880,17 +972,27 @@ void SparkIO::process_out_blocks() {
     b = 0;
     while (b != 0xf7) {
       sp.out_chunk.get(&b);
+
+      // look for cmd and sub in the stream and set blocking to true if 0x0101 found - multi chunk
+      // not sure if that should be here because it means the block send needs to understand the chunks content
+      // perhaps it should be between converting msgpack to chunks and put flow control in there
+      if (ob_pos == 20) 
+        cmd = b;
+      if (ob_pos == 21) {
+        sub = b;
+        if (cmd == 0x01 && sub == 0x01) 
+          ob_ok_to_send = false;
+      }
       out_block[ob_pos++] = b;
     }
-
     out_block[6] = ob_pos;
 
-    for (i=0; i<ob_pos; i++) {
-      if (out_block[i]<16) Serial.print("0");
-      Serial.print(out_block[i], HEX); 
-    }
-
     sp.bt.write(out_block, ob_pos);
-    delay(200);
+    ob_last_sent_time = millis();
+
+    
+    if (!ob_ok_to_send) {
+      DEBUG("Blocked");
+    }
   }
 }
