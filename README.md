@@ -65,8 +65,15 @@ void loop ()
 
   if (sp.get_message(&cmdsub, &msg, &preset)) {
     // do something based on the cmdsub field
+    switch (cmdsub) {
+      case 0x0301:
+        // got a preset sent back
+        break;
+      case 0x0337:
+        // got a change of effect parameter
+        break;
     }
-  
+  }
 }
 
 ```
