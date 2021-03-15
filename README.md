@@ -51,7 +51,7 @@ void setup()
 
 ```
 
-To run the asynchronous part, ensure that you regularly call:
+To run the asynchronous part, ensure that you regularly call process() - that is where the magic happens
 
 ```  
 void loop ()
