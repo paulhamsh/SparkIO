@@ -60,7 +60,7 @@ void loop ()
   sp.process();
 
   if (something_happens_like_a_pin_read) {
-    change_hardware_preset(2);
+    sp.change_hardware_preset(2);
     }
 
   if (sp.get_message(&cmdsub, &msg, &preset)) {
