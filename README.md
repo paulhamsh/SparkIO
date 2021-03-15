@@ -24,12 +24,12 @@ Eg cmdsub == 0x0301 means a preset was returned from the Spark and therefore &pr
 Message for the Spark can be created with the functions below. They will create a message from the parameters, queue it and send it to the Spark.   
 
 ```
-    void create_preset(SparkPreset *preset);
-    void get_serial();
-    void turn_effect_onoff(char *pedal, bool onoff);
-    void change_hardware_preset(uint8_t preset_num);
-    void change_effect(char *pedal1, char *pedal2);
-    void change_effect_parameter(char *pedal, int param, float val);
+void create_preset(SparkPreset *preset);
+void get_serial();
+void turn_effect_onoff(char *pedal, bool onoff);
+void change_hardware_preset(uint8_t preset_num);
+void change_effect(char *pedal1, char *pedal2);
+void change_effect_parameter(char *pedal, int param, float val);
 ```
 
 An example of the core program needed is:
