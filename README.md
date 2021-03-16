@@ -25,7 +25,7 @@ sp.get_message(&cmdsub, &msg, &preset)
 
 To use create an instance of the class and a variables for the commnand, a preset and a message, then in ```loop()``` call the async processing part ```process()``` and then retrieve the messages with ```get_message()```.    
 
-```get_message()``` returns true if a message has been retrieved, and it is stored in either ```&msg``` or ```&preset``` depending on whether it was a simple message or a preset.   
+```get_message(&cmdsub, &msg, &preset)``` returns true if a message has been retrieved, and it is stored in either ```&msg``` or ```&preset``` depending on whether it was a simple message or a preset.   
 
 Using ```cmdsub``` will tell you what was done - this holds the command and sub-command from the Spark.  
 
