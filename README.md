@@ -77,3 +77,9 @@ void loop ()
 }
 
 ```
+
+![SparkIO](https://github.com/paulhamsh/SparkIO/blob/main/SparkIO1.jpg)
+
+
+![SparkIO](https://github.com/paulhamsh/SparkIO/blob/main/SparkIO2.jpg)
+
