@@ -95,4 +95,4 @@ void loop ()
 
 # Overview of SparkIO class for receiving messages   
 
-![SparkIO1](https://github.com/paulhamsh/SparkIO/blob/main/SparkIO1.JPG)
+![SparkIO1](https://github.com/paulhamsh/SparkIO/blob/main/SparkIO1.jpg)
