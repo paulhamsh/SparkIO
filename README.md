@@ -78,8 +78,8 @@ void loop ()
 
 ```
 
-![SparkIO](https://github.com/paulhamsh/SparkIO/blob/main/SparkIO1.jpg)
+![SparkIO1](https://github.com/paulhamsh/SparkIO/blob/main/SparkIO1.JPG)
 
 
-![SparkIO](https://github.com/paulhamsh/SparkIO/blob/main/SparkIO2.jpg)
+![SparkIO2](https://github.com/paulhamsh/SparkIO/blob/main/SparkIO2.JPG)
 
