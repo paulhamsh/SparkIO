@@ -96,7 +96,6 @@ void loop ()
 And the two structures are shown below.  If the data returned is a Message then only specific fields are populated - see SparkIO.ino for details.
 
 ```
-
 typedef struct  {
   uint8_t  start_filler;
   uint8_t  preset_num;
@@ -114,7 +113,9 @@ typedef struct  {
   } effects[7];
   uint8_t end_filler;
 } SparkPreset;
+```
 
+```
 typedef struct {
   uint8_t param1;
   uint8_t param2;
@@ -125,7 +126,6 @@ typedef struct {
   char str2[STR_LEN];
   bool onoff;
 } SparkMessage;
-
 ```
 
 
