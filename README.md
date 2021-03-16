@@ -1,7 +1,13 @@
-# SparkIO
+# SparkIO   
+
 ESP32 C++ class to communicate with the Spark -generating and receiving proper messages   
 
 NEWS  - V1.0 now on github
+
+Some diagrams below to show the overview of the process within SparkIO.   
+
+
+# Background   
 
 SparkIO creates the bluetooth connection to the Spark, creating and sending messages to the Spark and receiving messages from the Spark and unpacking them.   
 It even works in the most complex case where a multi-chunk preset is sandwiched by other parameter change messages in the same set of blocks.   
@@ -14,6 +20,8 @@ Eventually this is converted to C++ structure SparkPreset or SparkMessage by a c
 ```
 sp.get_message(&cmdsub, &msg, &preset)
 ```
+
+# How to use   
 
 To use create an instance of the class and a variables for the commnand, a preset and a message, then in loop() call the async processing part (process) and then retrieve the messages with get_message().    
 get_message() returns true if a message has been retrieved, and it is stored in either &msg or &preset depending on whether it was a simple message or a preset.   
@@ -78,8 +86,10 @@ void loop ()
 
 ```
 
-![SparkIO1](https://github.com/paulhamsh/SparkIO/blob/main/SparkIO1.JPG)
-
+# Overview of SparkIO class for sending messages   
 
 ![SparkIO2](https://github.com/paulhamsh/SparkIO/blob/main/SparkIO2.JPG)
 
+# Overview of SparkIO class for receiving messages   
+
+![SparkIO1](https://github.com/paulhamsh/SparkIO/blob/main/SparkIO1.JPG)
