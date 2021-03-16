@@ -93,6 +93,51 @@ void loop ()
 }
 
 ```
+And the two structures are shown below.  If the data returned is a Message then only specific fields are populated - see SparkIO.ino for details.
+
+```
+
+typedef struct  {
+  uint8_t  start_filler;
+  uint8_t  preset_num;
+  char UUID[STR_LEN];
+  char Name[STR_LEN];
+  char Version[STR_LEN];
+  char Description[STR_LEN];
+  char Icon[STR_LEN+1];
+  float BPM;
+  struct SparkEffects {
+    char EffectName[STR_LEN];
+    bool OnOff;
+    uint8_t  NumParameters;
+    float Parameters[10];
+  } effects[7];
+  uint8_t end_filler;
+} SparkPreset;
+
+typedef struct {
+  uint8_t param1;
+  uint8_t param2;
+  uint8_t param3;
+  uint8_t param4;
+  float val;
+  char str1[STR_LEN];
+  char str2[STR_LEN];
+  bool onoff;
+} SparkMessage;
+
+```
+
+|-------|----|---|---|---|---|---|
+|cmdsub | str1 | str2 | val | param1 | param2 | onoff |
+|-------|----|---|---|---|---|---|
+|0323   | amp serial # | | | | | |
+|0337   | effect name  |  | effect val | effect number | | |
+|0306   | old effect | new effect | | | | |
+|0338   |  | | | 0  | new hw preset (0-3) | |
+
+
+
 
 # Overview of SparkIO class for sending messages   
 
