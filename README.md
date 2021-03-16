@@ -23,11 +23,13 @@ sp.get_message(&cmdsub, &msg, &preset)
 
 # How to use   
 
-To use create an instance of the class and a variables for the commnand, a preset and a message, then in loop() call the async processing part (process) and then retrieve the messages with get_message().    
-get_message() returns true if a message has been retrieved, and it is stored in either &msg or &preset depending on whether it was a simple message or a preset.   
-Using cmdsub will tell you what was done - this holds the command and sub-command from the Spark.  
+To use create an instance of the class and a variables for the commnand, a preset and a message, then in ```loop()``` call the async processing part (process) and then retrieve the messages with ```get_message()```.    
 
-Eg cmdsub == 0x0301 means a preset was returned from the Spark and therefore &preset has data.  
+```get_message()``` returns true if a message has been retrieved, and it is stored in either ```&msg``` or ```&preset``` depending on whether it was a simple message or a preset.   
+
+Using ```cmdsub``` will tell you what was done - this holds the command and sub-command from the Spark.  
+
+Eg cmdsub == 0x0301 means a preset was returned from the Spark and therefore ```&preset``` has data.  
 
 Message for the Spark can be created with the functions below. They will create a message from the parameters, queue it and send it to the Spark.   
 
@@ -59,7 +61,7 @@ void setup()
 
 ```
 
-To run the asynchronous part, ensure that you regularly call process() - that is where the magic happens.   
+To run the asynchronous part, ensure that you regularly call ```process()``` - that is where the magic happens.   
 No messages are sent or received synchronously - they are all added to ring buffers which are then handled by ```process()```   
 
 ```  
