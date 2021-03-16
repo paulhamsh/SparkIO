@@ -118,11 +118,12 @@ void setup() {
   sp.start_bt();
   sp.connect_to_spark();
 
-  display_str("Connected - waiting", STATUS);
-
   // If you start the amp ater the app it takes time to be able to process messages properly - 7s delay seems to work
-  delay(7000);
-
+  for (i=7; i>0; i--) {
+    snprintf(statstr, DISP_LEN, "Connected - waiting %ds", i);
+    display_str(statstr, STATUS);
+    delay(1000);
+  }
   display_str("Active", STATUS);
   keep_alive = millis();
   

@@ -505,6 +505,7 @@ void SparkIO::read_string(char *str)
     // process whole string but cap it at STR_LEN-1
     for (i = 0; i < len; i++) {
       read_byte(&a);
+      if (a<0x20 || a>0x7e) a=0x20; // make sure it is in ASCII range - to cope with get_serial 
       if (i < STR_LEN -1) str[i]=a;
     }
     str[i > STR_LEN-1 ? STR_LEN-1 : i]='\0';
@@ -528,6 +529,7 @@ void SparkIO::read_prefixed_string(char *str)
   if (len > 0) {
     for (i = 0; i < len; i++) {
       read_byte(&a);
+      if (a<0x20 || a>0x7e) a=0x20; // make sure it is in ASCII range - to cope with get_serial 
       if (i < STR_LEN -1) str[i]=a;
     }
     str[i > STR_LEN-1 ? STR_LEN-1 : i]='\0';
@@ -588,14 +590,24 @@ bool SparkIO::get_message(unsigned int *cmdsub, SparkMessage *msg, SparkPreset *
   read_byte(&sub);
   read_byte(&len_h);
   read_byte(&len_l);
+  
   bytes_to_uint(len_h, len_l, &len);
-
   bytes_to_uint(cmd, sub, &cs);
 
   *cmdsub = cs;
   switch (cs) {
+    // get serial number
     case 0x0323:
       read_string(msg->str1);
+      break;
+    // get name
+    case 0x0321:
+      read_string(msg->str1);
+      break;
+    // get current hardware preset number
+    case 0x0310:
+      read_byte(&msg->param1);
+      read_byte(&msg->param2);
       break;
     case 0x0337:
       read_string(msg->str1);
@@ -796,6 +808,37 @@ void SparkIO::get_serial()
 {
    start_message (0x0223);
    end_message();  
+}
+
+void SparkIO::get_name()
+{
+   start_message (0x0211);
+   end_message();  
+}
+
+void SparkIO::get_hardware_preset_number()
+{
+   start_message (0x0210);
+   end_message();  
+}
+
+
+void SparkIO::get_preset_details(unsigned int preset)
+{
+   int i;
+   uint8_t h, l;
+
+   uint_to_bytes(preset, &h, &l);
+   
+   start_message (0x0201);
+   write_byte(h);
+   write_byte(l);
+
+   for (i=0; i<30; i++) {
+     write_byte(0);
+   }
+   
+   end_message(); 
 }
 
 void SparkIO::create_preset(SparkPreset *preset)
