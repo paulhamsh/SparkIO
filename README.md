@@ -133,7 +133,7 @@ typedef struct {
 |-------|------|------|-----|--------|--------|-------|
 |0323   | amp serial # | | | | | |
 |0321   | amp name | | | | | |
-|0310   |  | | | | harware preset number - first byte | hardware preset number - second byte|
+|0310   |  | | | | hardware preset number - first byte | hardware preset number - second byte|
 |0337   | effect name  | | effect val | effect number | | |
 |0306   | old effect | new effect | | | | |
 |0338   |  | | | 0 | new hw preset (0-3) | |
