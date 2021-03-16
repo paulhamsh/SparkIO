@@ -35,11 +35,16 @@ Message for the Spark can be created with the functions below. They will create 
 
 ```
 void create_preset(SparkPreset *preset);
-void get_serial();
+
 void turn_effect_onoff(char *pedal, bool onoff);
 void change_hardware_preset(uint8_t preset_num);
 void change_effect(char *pedal1, char *pedal2);
 void change_effect_parameter(char *pedal, int param, float val);
+
+void get_serial();
+void get_name();
+void get_hardware_preset_number();
+void get_preset_details(unsigned int preset);
 ```
 
 An example of the core program needed is:
