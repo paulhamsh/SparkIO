@@ -91,8 +91,16 @@ void loop ()
 
 # Overview of SparkIO class for sending messages   
 
-![SparkIO2](https://github.com/paulhamsh/SparkIO/blob/main/SparkIO2.JPG)
+![SparkIO4](https://github.com/paulhamsh/SparkIO/blob/main/SparkIO4.JPG)
 
 # Overview of SparkIO class for receiving messages   
+
+![SparkIO3](https://github.com/paulhamsh/SparkIO/blob/main/SparkIO3.jpg)
+
+# Detail of SparkIO class for sending messages   
+
+![SparkIO2](https://github.com/paulhamsh/SparkIO/blob/main/SparkIO2.JPG)
+
+# Detail of SparkIO class for receiving messages   
 
 ![SparkIO1](https://github.com/paulhamsh/SparkIO/blob/main/SparkIO1.jpg)
