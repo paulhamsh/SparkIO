@@ -52,29 +52,30 @@ SparkMessage msg;
 void setup() 
 {
   ...
-  sp.start_bt();
-  sp.connect_to_spark();
+  sp.start_bt();            // start bluetooth
+  sp.connect_to_spark();    // connect to the Spark amp
   ...
 }
 
 ```
 
-To run the asynchronous part, ensure that you regularly call process() - that is where the magic happens
+To run the asynchronous part, ensure that you regularly call process() - that is where the magic happens.   
+No messages are sent or received synchronously - they are all added to ring buffers which are then handled by ```process()```   
 
 ```  
 void loop ()
 {
 
-  sp.process();
+  sp.process();             // where all the async processing happens - receive and transmit
 
   if (something_happens_like_a_pin_read) {
-    sp.change_hardware_preset(2);
+    sp.change_hardware_preset(2);                     // just an example message to create
     }
 
-  if (sp.get_message(&cmdsub, &msg, &preset)) {
+  if (sp.get_message(&cmdsub, &msg, &preset)) {       // get any messages from the amp
     // do something based on the cmdsub field
-    switch (cmdsub) {
-      case 0x0301:
+    switch (cmdsub) {                                 // process messages received
+      case 0x0301:                                    
         // got a preset sent back
         break;
       case 0x0337:
