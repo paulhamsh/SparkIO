@@ -154,20 +154,23 @@ typedef struct {
 |0115   | enable / disable effect | pedal, onoff |
 |0223   | get amp serial number|
 |0211   | get amp name|
-|0210   | get current preset number|   NOT IMPLEMENTED YET |
-|0201   | preset_num |
+|0210   | get current preset number|
+|0201   | get preset details | preset_num |
 |020f   | get firmware version|  NOT IMPLEMENTED YET  |
 
 ## From Amp   
 
-|cmdsub | str1 | str2 | val | param1 | param2 | onoff |
-|-------|------|------|-----|--------|--------|-------|
-|0323   | amp serial # | | | | | |
-|0321   | amp name | | | | | |
-|0327   |  | | | hardware preset number - first byte | hardware preset number - second byte| |
-|0337   | effect name  | | effect val | effect number | | |
-|0306   | old effect | new effect | | | | |
-|0338   |  | | | 0 | new hw preset (0-3) | |
+|cmdsub | description | str1 | str2 | val | param1 | param2 | onoff |
+|-------|-------------|------|------|-----|--------|--------|-------|
+|0323   | get amp serial number | amp serial # | | | | | |
+|0321   | get amp name | amp name | | | | | |
+|0327   | store hardware preset | | | hardware preset number - first byte | hardware preset number - second byte| |
+|0337   | change of parameter | effect name  | | effect val | effect number | | |
+|0306   | change of effect | old effect | new effect | | | | |
+|0338   | change of preset on amp | | | 0 | new hw preset (0-3) | |
+|0310   | hardware preset on amp |  | | hardware preset number - first byte | hardware preset number - second byte| |
+|032f   | firmware version | NOT IMPLEMENTED YET |
+|0363   | tap tempo | NOT IMPLEMENTED YET |
 |0401   |
 |0438   |
 |0406   |
