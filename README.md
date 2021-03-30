@@ -154,24 +154,60 @@ typedef struct {
 |-------|------|------|-----|--------|--------|-------|
 |0323   | amp serial # | | | | | |
 |0321   | amp name | | | | | |
-|0310   |  | | | hardware preset number - first byte | hardware preset number - second byte| |
+|0327   |  | | | hardware preset number - first byte | hardware preset number - second byte| |
 |0337   | effect name  | | effect val | effect number | | |
 |0306   | old effect | new effect | | | | |
 |0338   |  | | | 0 | new hw preset (0-3) | |
+|0401   |
+|0438   |
+|0406   |
+
+|cmdsub | preset | 
+|-------|--------|
+|0301   | preset |
 
 ## To Amp
 
-TBD   
+|cmdsub | parameters |
+|-------| -----------|
+|0101   | SparkPreset |
+|0104   | pedal, param, val |
+|0106   | pedal1, pedal2 |
+|0138   | preset_num |
+|0115   | pedal, onoff |
+|0223   | |
+|0211   | |
+|0211   | |
+|0201   | preset_num |
+
 
 # SparkAppIO messages handled   
 
 ## From App   
 
-TBD   
+|cmdsub | str1 | str2 | val | param1 | param2 | onoff |
+|-------|------|------|-----|--------|--------|-------|
+|0123   | amp serial # | | | | | |
+|0121   | amp name | | | | | |
+|0110   |  | | | hardware preset number - first byte | hardware preset number - second byte| |
+|0106   | old effect | new effect | | | | |
+|0138   |  | | | 0 | new hw preset (0-3) | |
+|0104   | effect name | | effect val | effect number | | |
+
+|cmdsub | preset | 
+|-------|--------|
+|0101   | SparkPreset |
 
 ## To App   
 
-TBD   
+|cmdsub | parameters |
+|-------| -----------|
+|0306   | pedal1, pedal2 |
+|0338   | preset_num |
+|0337   | pedal, param, val |
+|0315   | pedal, onoff |
+|0327   | preset_num |
+|0301   | SparkPreset| 
 
 # Overview of SparkIO class for sending messages   
 
