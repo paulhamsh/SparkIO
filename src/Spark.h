@@ -22,7 +22,7 @@ typedef struct  {
     uint8_t  NumParameters;
     float Parameters[10];
   } effects[7];
-  uint8_t end_filler;
+  uint8_t chksum;
 } SparkPreset;
 
 typedef struct {

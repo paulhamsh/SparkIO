@@ -84,7 +84,7 @@ void dump_preset(SparkPreset preset) {
     }
     Serial.println();
   }
-  Serial.println(preset.end_filler);
+  Serial.println(preset.chksum);
   Serial.println();
 }
 

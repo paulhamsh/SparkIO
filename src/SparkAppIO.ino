@@ -712,7 +712,7 @@ void SparkAppIO::create_preset(SparkPreset *preset)
       write_float (preset->effects[i].Parameters[j]);
     }
   }
-  write_byte (preset->end_filler);  
+  write_byte (preset->chksum);  
   end_message();
 }
 

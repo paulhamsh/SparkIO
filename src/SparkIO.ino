@@ -499,7 +499,7 @@ bool SparkIO::get_message(unsigned int *cmdsub, SparkMessage *msg, SparkPreset *
           read_float(&preset->effects[j].Parameters[i]);
         }
       }
-      read_byte(&preset->end_filler);  
+      read_byte(&preset->chksum);  
       break;
     case 0x0401:
     case 0x0438:
