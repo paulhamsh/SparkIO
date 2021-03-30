@@ -4,6 +4,7 @@ ESP32 C++ class to communicate with the Spark amp and Spark App - generating and
 
 Some diagrams below to show the overview of the process within SparkIO. SparkAppIO is broadly the same but with different message numbers.
 
+Before using any of this you should really read the Spark format documentation in this folder - Spark Protocol Description.    The interaction between App and Spark is complex and multi-layered, and it won't be easy to achieve anything without much of an understanding of how it works.     
 
 # Background   
 
