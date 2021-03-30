@@ -39,9 +39,9 @@ To use create an instance of the class and a variables for the commnand, a prese
 
 Using ```cmdsub``` will tell you what was done - this holds the command and sub-command from the Spark.  
 
-Eg cmdsub == 0x0301 means a preset was returned from the Spark and therefore ```&preset``` has data.  
+Eg cmdsub == 0x0301 means a preset was returned from the Spark and therefore ```&preset``` has data - otherwise ```&msg``` will have the data. All responses are either embedded in a message or a full preset it returned.    
 
-Message for the Spark can be created with the functions below. They will create a message from the parameters, queue it and send it to the Spark.   
+Messages for the Spark can be created with the functions below. They will create a message from the parameters, queue it and send it to the Spark.   
 
 ```
 void create_preset(SparkPreset *preset);
