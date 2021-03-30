@@ -6,6 +6,8 @@ Some diagrams below to show the overview of the process within SparkIO. SparkApp
 
 Before using any of this you should really read the Spark format documentation in this folder - Spark Protocol Description.    The interaction between App and Spark is complex and multi-layered, and it won't be easy to achieve anything without much of an understanding of how it works.     
 
+This is still a work-in-progress, and especially SparkAppIO is new, so I can't guarantee it is fully tested or full implemented yet.   
+
 # Background   
 
 SparkIO creates and sends messages to the Spark and receives messages from the Spark and unpacks them.   
