@@ -143,6 +143,21 @@ typedef struct {
 
 # SparkIO messages handled   
 
+## To Amp
+
+|cmdsub | description | parameters |
+|-------| ------------|------------|
+|0101   | create preset | SparkPreset |
+|0104   | send new parameter | pedal, param, val |
+|0106   | change effect | pedal1, pedal2 |
+|0138   | change preset | preset_num |
+|0115   | enable / disable effect | pedal, onoff |
+|0223   | get amp serial number|
+|0211   | get amp name|
+|0210   | get current preset number|   NOT IMPLEMENTED YET |
+|0201   | preset_num |
+|020f   | get firmware version|  NOT IMPLEMENTED YET  |
+
 ## From Amp   
 
 |cmdsub | str1 | str2 | val | param1 | param2 | onoff |
@@ -161,19 +176,7 @@ typedef struct {
 |-------|--------|
 |0301   | preset |
 
-## To Amp
 
-|cmdsub | parameters |
-|-------| -----------|
-|0101   | SparkPreset |
-|0104   | pedal, param, val |
-|0106   | pedal1, pedal2 |
-|0138   | preset_num |
-|0115   | pedal, onoff |
-|0223   | |
-|0211   | |
-|0211   | |
-|0201   | preset_num |
 
 
 # SparkAppIO messages handled   
