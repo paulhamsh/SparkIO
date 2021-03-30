@@ -1,19 +1,19 @@
-#ifndef SparkIO_h
-#define SparkIO_h
+#ifndef SparkAppIO_h
+#define SparkAppIO_h
 
 #include "RingBuffer.h"
 #include "Spark.h"
 #include "SparkComms.h"
 
-#define MAX_BT_BUFFER 5000
-
-class SparkIO
+#define MAX_SER_BUFFER 5000
+    
+class SparkAppIO
 {
   public:
-    SparkIO(bool passthru);
-    ~SparkIO();
+    SparkAppIO(bool passthru);
+    ~SparkAppIO();
 
-    // bluetooth communictions
+    // bluetooth communications
 
     SparkComms *comms;
 
@@ -39,12 +39,9 @@ class SparkIO
     void change_hardware_preset(uint8_t preset_num);
     void change_effect(char *pedal1, char *pedal2);
     void change_effect_parameter(char *pedal, int param, float val);
+    void save_hardware_preset(uint8_t preset_num);
 
-    void get_serial();
-    void get_name();
-    void get_hardware_preset_number();
-    void get_preset_details(unsigned int preset);
-    
+  
     // sending data
 
     void out_store(uint8_t b);
@@ -89,7 +86,6 @@ class SparkIO
     RingBuffer out_message;
     int om_cmd;
     int om_sub;
-    int out_msg_chksum;
 
     // out_chunk
 
@@ -110,14 +106,15 @@ class SparkIO
     uint8_t ob_last_seq_sent;
     unsigned int ob_last_sent_time;
 
-        // passthrough
+    // passthrough
 
-    uint8_t bt_buf[MAX_BT_BUFFER];
-    int bt_pos;
-    int bt_len;
-    int bt_state;
+    uint8_t ser_buf[MAX_SER_BUFFER];
+    int ser_pos;
+    int ser_len;
+    int ser_state;
     bool pass_through;
-    
+
+
   private:
    
     // routines to read the msgpack data
@@ -131,7 +128,6 @@ class SparkIO
     void start_message(int cmdsub);
     void end_message();
     void write_byte(byte b);
-    void write_byte_no_chksum(byte b);
     void write_prefixed_string(const char *str);
     void write_long_string(const char *str);
     void write_string(const char *str);
@@ -139,6 +135,7 @@ class SparkIO
     void write_onoff(bool onoff);
 
 };
+
 
 #endif
       
