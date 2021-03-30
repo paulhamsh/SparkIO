@@ -2,28 +2,23 @@
 
 ESP32 C++ class to communicate with the Spark amp and Spark App - generating and receiving proper messages   
 
-NEWS  - V1.0 now on github
-
 Some diagrams below to show the overview of the process within SparkIO. SparkAppIO is broadly the same but with different message numbers.
 
 
 # Background   
 
-SparkIO creates the bluetooth connection to the Spark, creating and sending messages to the Spark and receiving messages from the Spark and unpacking them.   
-It even works in the most complex case where a multi-chunk preset is sandwiched by other parameter change messages in the same set of blocks.  
+SparkIO creates and sends messages to the Spark and receives messages from the Spark and unpacks them.   
+SparkAppIO does the same for messages to and from the App.    
+SparkComms handles the bluetooth connection and serial connections, so this is abstracted from SparkIO and SparkAppIO.   Both SparkIO and SparkAppIO need a reference to this class.    
+SparkAppIO assumes a serial connection to another device, which is in turn connected to the Spark app. This is because I can't find an ESP32 device that allows two bluetooth connections, so the App connection is proxied by a different device.   
 
-SparkAppIO assumes a serial connection to another device, which is in turn connected to the Spark app. This is because I can't find an ESP32 device that allows two bluetooth connections, so the App connection is proxied by a different device.
+It even works in the most complex case where a multi-chunk preset is sandwiched by other parameter change messages in the same set of blocks.  And this is complex. Most of the code is to handle this complex case and handle the packing and unpacking of presets. Other messages a really simple in comparions.    
 
-SparkComms handles the bluetooth connection and serial connections, so this is abstracted from SparkIO and SparkAppIO.   Both SparkIO and SparkAppIO need a reference to this class.   
 
 To handle the asynchronous nature of the receipt of messages, a ring buffer is used to store the chunk data.  
 This is then converted to msgpack data in a second ring buffer.  
 
-Eventually this is converted to C++ structure SparkPreset or SparkMessage by a call to 
-
-```
-sp.get_message(&cmdsub, &msg, &preset)
-```
+Eventually this is converted to C++ structure SparkPreset or SparkMessage by a call to ``` sp.get_message(&cmdsub, &msg, &preset) ```
 
 # How to use   
 
@@ -31,7 +26,7 @@ This is similar for SparkIO and SparkAppIO - they handle messages to and from th
 
 You don't need both classes in a program - if you only want to talk to the amp just you only need SparkIO.   
 
-Both classes allow creation with a boolean parameter - true allows passthru of all messages between app and amp whilst also processing them, false will block these messages so that all messages need to be processed in the ```loop()```   
+Both classes need to be created with a boolean parameter - true allows passthru of all messages between app and amp whilst also processing them, false will block these messages so that all messages need to be processed in the ```loop()```   
 
 To use create an instance of the class and a variables for the commnand, a preset and a message, then in ```loop()``` call the async processing part ```process()``` and then retrieve the messages with ```get_message()```.    
 
