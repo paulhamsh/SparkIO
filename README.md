@@ -1,16 +1,20 @@
-# SparkIO   
+# SparkIO / SparkAppIO
 
-ESP32 C++ class to communicate with the Spark -generating and receiving proper messages   
+ESP32 C++ class to communicate with the Spark amp and Spark App - generating and receiving proper messages   
 
 NEWS  - V1.0 now on github
 
-Some diagrams below to show the overview of the process within SparkIO.   
+Some diagrams below to show the overview of the process within SparkIO. SparkAppIO is broadly the same but with different message numbers.
 
 
 # Background   
 
 SparkIO creates the bluetooth connection to the Spark, creating and sending messages to the Spark and receiving messages from the Spark and unpacking them.   
-It even works in the most complex case where a multi-chunk preset is sandwiched by other parameter change messages in the same set of blocks.   
+It even works in the most complex case where a multi-chunk preset is sandwiched by other parameter change messages in the same set of blocks.  
+
+SparkAppIO assumes a serial connection to another device, which is in turn connected to the Spark app. This is because I can't find an ESP32 device that allows two bluetooth connections, so the App connection is proxied by a different device.
+
+SparkComms handles the bluetooth connection and serial connections, so this is abstracted from SparkIO and SparkAppIO.   Both SparkIO and SparkAppIO need a reference to this class.   
 
 To handle the asynchronous nature of the receipt of messages, a ring buffer is used to store the chunk data.  
 This is then converted to msgpack data in a second ring buffer.  
@@ -22,6 +26,12 @@ sp.get_message(&cmdsub, &msg, &preset)
 ```
 
 # How to use   
+
+This is similar for SparkIO and SparkAppIO - they handle messages to and from the amp / app in a similar way.   
+
+You don't need both classes in a program - if you only want to talk to the amp just you only need SparkIO.   
+
+Both classes allow creation with a boolean parameter - true allows passthru of all messages between app and amp whilst also processing them, false will block these messages so that all messages need to be processed in the ```loop()```   
 
 To use create an instance of the class and a variables for the commnand, a preset and a message, then in ```loop()``` call the async processing part ```process()``` and then retrieve the messages with ```get_message()```.    
 
@@ -50,7 +60,9 @@ void get_preset_details(unsigned int preset);
 An example of the core program needed is:
 
 ``` 
-SparkIO sp;
+SparkAppIO app_io(true);         // true in the parameter sends all messages from serial to the amp *via bt)  - passthru
+SparkIO spark_io(true);          // true in the parameter sends all messages from the amp (via bt) to serial - passthru
+SparkComms spark_comms;
 
 unsigned int cmdsub;
 SparkPreset preset;
@@ -59,8 +71,14 @@ SparkMessage msg;
 void setup() 
 {
   ...
-  sp.start_bt();            // start bluetooth
-  sp.connect_to_spark();    // connect to the Spark amp
+
+  spark_io.comms = &spark_comms;  // link to the comms class
+  app_io.comms = &spark_comms;    // link to the comms class
+
+  spark_comms.start_bt();         // start bt
+  spark_comms.connect_to_spark(); // connect bt to amp
+  spark_comms.start_ser();        // start serial and assume another ESP 32 is linked to the app
+  
   ...
 }
 
@@ -73,13 +91,14 @@ No messages are sent or received synchronously - they are all added to ring buff
 void loop ()
 {
 
-  sp.process();             // where all the async processing happens - receive and transmit
+  spark_io.process();             // where all the async processing happens - receive and transmit - to and from amp
+  app_io.process();               // where all the async processing happens - receive and transmit - to and from app
 
   if (something_happens_like_a_pin_read) {
-    sp.change_hardware_preset(2);                     // just an example message to create
+    spark_io.change_hardware_preset(2);                     // just an example message to create
     }
 
-  if (sp.get_message(&cmdsub, &msg, &preset)) {       // get any messages from the amp
+  if (spark_io.get_message(&cmdsub, &msg, &preset)) {       // get any messages from the amp
     // do something based on the cmdsub field
     switch (cmdsub) {                                 // process messages received
       case 0x0301:                                    
@@ -97,13 +116,13 @@ And the two structures are shown below.  If the data returned is a Message then 
 
 ```
 typedef struct  {
-  uint8_t  start_filler;
+  uint8_t  curr_preset;
   uint8_t  preset_num;
   char UUID[STR_LEN];
   char Name[STR_LEN];
   char Version[STR_LEN];
   char Description[STR_LEN];
-  char Icon[STR_LEN+1];
+  char Icon[STR_LEN];
   float BPM;
   struct SparkEffects {
     char EffectName[STR_LEN];
@@ -111,16 +130,15 @@ typedef struct  {
     uint8_t  NumParameters;
     float Parameters[10];
   } effects[7];
-  uint8_t end_filler;
+  uint8_t chksum;
 } SparkPreset;
-```
 
-```
 typedef struct {
   uint8_t param1;
   uint8_t param2;
   uint8_t param3;
   uint8_t param4;
+  uint32_t param5;
   float val;
   char str1[STR_LEN];
   char str2[STR_LEN];
@@ -128,6 +146,9 @@ typedef struct {
 } SparkMessage;
 ```
 
+# SparkIO messages handled   
+
+## From Amp   
 
 |cmdsub | str1 | str2 | val | param1 | param2 | onoff |
 |-------|------|------|-----|--------|--------|-------|
@@ -138,8 +159,19 @@ typedef struct {
 |0306   | old effect | new effect | | | | |
 |0338   |  | | | 0 | new hw preset (0-3) | |
 
+## To Amp
 
+TBD   
 
+# SparkAppIO messages handled   
+
+## From App   
+
+TBD   
+
+## To App   
+
+TBD   
 
 # Overview of SparkIO class for sending messages   
 
