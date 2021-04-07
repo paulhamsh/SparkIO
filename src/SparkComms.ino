@@ -2,12 +2,7 @@
 #include "SparkComms.h"
 #include "BluetoothSerial.h"
 
-#define HWSER_TX 18
-#define HWSER_RX 5
-
 SparkComms::SparkComms() {
-  bt = NULL;
-  ser = NULL;
 }
 
 SparkComms::~SparkComms() {
@@ -17,7 +12,8 @@ void SparkComms::start_ser() {
   uint8_t b;
   
   ser = new HardwareSerial(2); 
-  ser->begin(HW_BAUD, SERIAL_8N1, HWSER_RX, HWSER_TX);
+  // 5 is rx, 18 is tx
+  ser->begin(HW_BAUD, SERIAL_8N1, 5, 18);
 
   while (ser->available())
     b = ser->read(); 

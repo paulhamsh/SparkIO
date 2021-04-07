@@ -182,7 +182,7 @@ void SparkAppIO::process_in_blocks() {
       }
       else {
         rb_state = 0;
-        DEBUG("Bad block header");
+        DEBUG("SparkAppIO bad block header");
       }
     } 
     // and once past the header just read the next bytes as defined by rb_len
@@ -456,15 +456,15 @@ bool SparkAppIO::get_message(unsigned int *cmdsub, SparkMessage *msg, SparkPrese
 
   *cmdsub = cs;
   switch (cs) {
-    // get serial number
+    // get serial number - BUG THIS SHOULD BE 0x0223
     case 0x0123:
       read_string(msg->str1);
       break;
-    // get name
+    // get name - BUG THIS SHOULD BE 0x0221
     case 0x0121:
       read_string(msg->str1);
       break;
-    // get current hardware preset number
+    // get current hardware preset number - BUG THIS SHOULD BE 0x0210
     case 0x0110:
       read_byte(&msg->param1);
       read_byte(&msg->param2);

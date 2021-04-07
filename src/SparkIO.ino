@@ -165,13 +165,19 @@ void SparkIO::process_in_blocks() {
       rb_state++;
     }
     // check every other byte in the block header for a match to the header standard
-    else if (rb_state > 0 && rb_state < 16) {
+    else if (rb_state >= 0 && rb_state < 16) {
       if (b == chunk_header_from_spark[rb_state]) {
         rb_state++;
       }
       else {
-        rb_state = 0;
-        DEBUG("Bad block header");
+        Serial.print (rb_state);
+        Serial.print(" ");
+        Serial.print(b);
+        Serial.print(" ");
+        Serial.print(rb_len);
+        Serial.println();
+        rb_state = -1;
+        DEBUG("SparkIO bad block header");
       }
     } 
     // and once past the header just read the next bytes as defined by rb_len
@@ -189,9 +195,9 @@ void SparkIO::process_in_blocks() {
     // and resets the state to 0 it can be processed here for that byte - saves missing the 
     // first byte of the header if that was misplaced
     
-    if (rb_state == 0) 
+    if (rb_state == -1) 
       if (b == chunk_header_from_spark[0]) 
-        rb_state++;
+        rb_state = 1;
   }
 }
 
