@@ -453,6 +453,25 @@ bool SparkIO::get_message(unsigned int *cmdsub, SparkMessage *msg, SparkPreset *
 
   *cmdsub = cs;
   switch (cs) {
+    // change of effect model
+    case 0x0306:
+      read_string(msg->str1);
+      read_string(msg->str2);
+      break;
+    // get current hardware preset number
+    case 0x0310:
+      read_byte(&msg->param1);
+      read_byte(&msg->param2);
+      break;
+    // get name
+    case 0x0311:
+      read_string(msg->str1);
+      break;
+    // enable / disable an effect
+    case 0x0315:
+      read_string(msg->str1);
+      read_onoff(&msg->onoff);
+      break;
     // get serial number
     case 0x0323:
       read_string(msg->str1);
@@ -462,28 +481,27 @@ bool SparkIO::get_message(unsigned int *cmdsub, SparkMessage *msg, SparkPreset *
       read_byte(&msg->param1);
       read_byte(&msg->param2);
       break;
-    // get name
-    case 0x0321:
-      read_string(msg->str1);
+    // firmware version number
+    case 0x032f:
+      // really this is a uint32 but it is just as easy to read into 4 uint8 - a bit of a cheat
+      read_byte(&junk);           // this will be 0xce for a uint32
+      read_byte(&msg->param1);      
+      read_byte(&msg->param2); 
+      read_byte(&msg->param3); 
+      read_byte(&msg->param4); 
       break;
-    // get current hardware preset number
-    case 0x0310:
-      read_byte(&msg->param1);
-      read_byte(&msg->param2);
-      break;
+    // change of effect parameter
     case 0x0337:
       read_string(msg->str1);
       read_byte(&msg->param1);
       read_float(&msg->val);
       break;
-    case 0x0306:
-      read_string(msg->str1);
-      read_string(msg->str2);
-      break;
+    // change of preset number selected on the amp via the buttons
     case 0x0338:
       read_byte(&msg->param1);
       read_byte(&msg->param2);
       break;
+    // response to a request for a full preset
     case 0x0301:
       read_byte(&preset->curr_preset);
       read_byte(&preset->preset_num);
@@ -507,9 +525,17 @@ bool SparkIO::get_message(unsigned int *cmdsub, SparkMessage *msg, SparkPreset *
       }
       read_byte(&preset->chksum);  
       break;
+    // tap tempo!
+    case 0x0363:
+      read_float(&msg->val);  
+      break;
+    // acks - no payload to read - no ack sent for an 0x104
     case 0x0401:
-    case 0x0438:
     case 0x0406:
+    case 0x0415:
+    case 0x0438:
+      Serial.print("Got an ack ");
+      Serial.println(cs, HEX);
       break;
     default:
       Serial.print("Unprocessed message SparkIO ");

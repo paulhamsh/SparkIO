@@ -456,39 +456,60 @@ bool SparkAppIO::get_message(unsigned int *cmdsub, SparkMessage *msg, SparkPrese
 
   *cmdsub = cs;
   switch (cs) {
-    // get serial number - BUG THIS SHOULD BE 0x0223
-    case 0x0123:
-      read_string(msg->str1);
-      break;
-    // get name - BUG THIS SHOULD BE 0x0221
-    case 0x0121:
-      read_string(msg->str1);
-      break;
-    // get current hardware preset number - BUG THIS SHOULD BE 0x0210
-    case 0x0110:
+    // 0x02 series - requests
+    // get preset information
+    case 0x0201:
       read_byte(&msg->param1);
       read_byte(&msg->param2);
+      for (i=0; i < 30; i++) read_byte(&junk); // 30 bytes of 0x00
+      break;            
+    // get current hardware preset number - this is a request with no payload
+    case 0x0210:
       break;
-    /* Does this exist????
-    case 0x0137:
-      read_string(msg->str1);
+    // get amp name - no payload
+    case 0x0211:
+      break;
+    // get name - this is a request with no payload
+    case 0x0221:
+      break;
+    // get serial number - this is a request with no payload
+    case 0x0223:
+      break;
+    // the UNKNOWN command - 0x0224 00 01 02 03
+    case 0x0224:
+      // the data is a fixed array of four bytes (0x94 00 01 02 03)
+      read_byte(&junk);
       read_byte(&msg->param1);
-      read_float(&msg->val);
+      read_byte(&msg->param2);
+      read_byte(&msg->param3);
+      read_byte(&msg->param4);
       break;
-    */
-    case 0x0106:
-      read_string(msg->str1);
-      read_string(msg->str2);
+    // get firmware version - this is a request with no payload
+    case 0x022f:
       break;
+    // 0x01 series - instructions
+    // change effect parameter
     case 0x0104:
       read_string(msg->str1);
       read_byte(&msg->param1);
       read_float(&msg->val);
       break;
+    // change effect model
+    case 0x0106:
+      read_string(msg->str1);
+      read_string(msg->str2);
+      break;
+    // enable / disable effecct
+    case 0x0115:
+      read_string(msg->str1);
+      read_onoff(&msg->onoff);
+      break;    
+    // change preset to 0-3, 0x7f
     case 0x0138:
       read_byte(&msg->param1);
       read_byte(&msg->param2);
       break;
+    // send whole new preset to 0-3, 0x7f  
     case 0x0101:
       read_byte(&junk);
       read_byte(&preset->preset_num);
@@ -510,7 +531,7 @@ bool SparkAppIO::get_message(unsigned int *cmdsub, SparkMessage *msg, SparkPrese
           read_float(&preset->effects[j].Parameters[i]);
         }
       }
-      read_byte(&junk);  
+      read_byte(&preset->chksum);  
       break;
     default:
       Serial.print("Unprocessed message SparkAppIO ");
