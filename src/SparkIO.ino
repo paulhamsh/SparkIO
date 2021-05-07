@@ -349,7 +349,7 @@ void SparkIO::read_string(char *str)
   if (a == 0xd9) {
     read_byte(&len);
   }
-  else if (a > 0xa0) {
+  else if (a >= 0xa0) {
     len = a - 0xa0;
   }
   else {
