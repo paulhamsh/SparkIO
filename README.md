@@ -144,6 +144,61 @@ typedef struct {
 } SparkMessage;
 ```
 
+
+
+# Example program (simple - connect to Spark and rotate through the four presets) [not tested but should work!!!]
+
+```
+#include "BluetoothSerial.h"
+#include "Spark.h"
+#include "SparkIO.h"
+#include "SparkComms.h"
+
+SparkIO spark_io(false); // do NOT do passthru as only one device here, no serial to the *app*
+SparkComms spark_comms;
+
+unsigned int cmdsub;
+SparkMessage msg;
+SparkPreset preset;
+SparkPreset presets[6];
+
+unsigned long last_millis;
+unsigned int pres;
+
+void setup() {
+  // setup comms to the amp only.
+  spark_io.comms = &spark_comms;
+  spark_comms.start_bt();
+  spark_comms.connect_to_spark();
+
+  last_millis = millis();
+  pres = 0;
+  delay(1000);
+}
+
+  
+void loop() {
+  spark_io.process();
+  
+  // process received messages
+  if (spark_io.get_message(&cmdsub, &msg, &preset)) { // get any messages from the amp
+   
+    if (cmdsub == 0x0301) { // got a response to a 0x0201 preset info request
+      // do something if you want
+    }
+  }
+
+  // queue up messages to send
+  if (millis() - last_millis > 2000) {
+    last_millis = millis();
+  
+    spark_io.change_hardware_preset(pres);   // change to a new hardware preset
+    pres++;
+    if (pres > 3) pres = 0;
+  }
+}
+```
+
 # SparkIO messages handled   
 
 ## To Amp
