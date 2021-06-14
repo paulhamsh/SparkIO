@@ -354,7 +354,7 @@ void SparkIO::read_string(char *str)
   }
   else {
     read_byte(&a);
-    if (a < 0xa1 || a >= 0xc0) DEBUG("Bad string");
+    if (a < 0xa0 || a >= 0xc0) DEBUG("Bad string");
     len = a - 0xa0;
   }
 
@@ -380,7 +380,7 @@ void SparkIO::read_prefixed_string(char *str)
   read_byte(&a); 
   read_byte(&a);
 
-  if (a < 0xa1 || a >= 0xc0) DEBUG("Bad string");
+  if (a < 0xa0 || a >= 0xc0) DEBUG("Bad string");
   len = a-0xa0;
 
   if (len > 0) {
